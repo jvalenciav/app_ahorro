@@ -3,50 +3,63 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/template_model.dart';
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/formatters.dart';
+import 'edit_template_screen.dart';
 
 class TemplateDetailScreen extends StatelessWidget {
   final SavingTemplate template;
-
   const TemplateDetailScreen({super.key, required this.template});
 
-  Color get _color {
-    if (template.colorHex == null) return const Color(0xFF4CAF50);
-    final hex = template.colorHex!.replaceAll('#', '');
+  Color _templateColor(SavingTemplate t) {
+    if (t.colorHex == null) return const Color(0xFF4CAF50);
+    final hex = t.colorHex!.replaceAll('#', '');
     return Color(int.parse('FF$hex', radix: 16));
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    // get fresh template from provider
+    final isDark = context.watch<ThemeProvider>().isDark;
     final t = provider.templates.firstWhere((x) => x.id == template.id,
         orElse: () => template);
+    final color = _templateColor(t);
+    final textColor = isDark ? Colors.white : const Color(0xFF1A2A3A);
+    final subColor = isDark ? Colors.white54 : Colors.black45;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         title: Text(
           '${t.emoji ?? ''} ${t.name}',
           style: GoogleFonts.poppins(
-              color: Colors.white, fontWeight: FontWeight.bold),
+              color: textColor, fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: textColor),
         actions: [
+          // Botón editar
+          IconButton(
+            icon: Icon(Icons.edit_outlined, color: color),
+            tooltip: 'Editar',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => EditTemplateScreen(template: t)),
+            ),
+          ),
           PopupMenuButton<String>(
-            iconColor: Colors.white,
+            iconColor: textColor,
             onSelected: (val) async {
               if (val == 'reset') {
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    backgroundColor: const Color(0xFF1A2A3A),
+                    backgroundColor:
+                        isDark ? const Color(0xFF1A2A3A) : Colors.white,
                     title: Text('Reiniciar',
-                        style: GoogleFonts.poppins(color: Colors.white)),
+                        style: GoogleFonts.poppins(color: textColor)),
                     content: Text('¿Borrar todo el progreso?',
-                        style: GoogleFonts.poppins(color: Colors.white70)),
+                        style: GoogleFonts.poppins(color: subColor)),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -58,20 +71,20 @@ class TemplateDetailScreen extends StatelessWidget {
                     ],
                   ),
                 );
-                if (ok == true) {
-                  await provider.resetTemplate(t.id);
-                }
+                if (ok == true) await provider.resetTemplate(t.id);
               } else if (val == 'delete' && !t.isPredefined) {
                 await provider.deleteTemplate(t.id);
                 if (context.mounted) Navigator.pop(context);
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(value: 'reset', child: Text('Reiniciar progreso')),
+              const PopupMenuItem(
+                  value: 'reset', child: Text('Reiniciar progreso')),
               if (!t.isPredefined)
                 const PopupMenuItem(
                     value: 'delete',
-                    child: Text('Eliminar', style: TextStyle(color: Colors.red))),
+                    child: Text('Eliminar',
+                        style: TextStyle(color: Colors.red))),
             ],
           ),
         ],
@@ -83,9 +96,9 @@ class TemplateDetailScreen extends StatelessWidget {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _color.withOpacity(0.15),
+              color: color.withOpacity(isDark ? 0.15 : 0.08),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _color.withOpacity(0.3)),
+              border: Border.all(color: color.withOpacity(0.3)),
             ),
             child: Column(
               children: [
@@ -93,10 +106,10 @@ class TemplateDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _statBox('Ahorrado', formatMoney(t.savedAmount),
-                        const Color(0xFF4CAF50)),
+                        const Color(0xFF4CAF50), subColor),
                     _statBox('Restante', formatMoney(t.remainingAmount),
-                        Colors.orange),
-                    _statBox('Total', formatMoney(t.totalAmount), _color),
+                        Colors.orange, subColor),
+                    _statBox('Total', formatMoney(t.totalAmount), color, subColor),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -106,7 +119,7 @@ class TemplateDetailScreen extends StatelessWidget {
                     value: t.progressPercentage / 100,
                     minHeight: 12,
                     backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation<Color>(_color),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -115,13 +128,12 @@ class TemplateDetailScreen extends StatelessWidget {
                   children: [
                     Text(
                       '${t.completedEntries}/${t.entries.length} completados',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white54, fontSize: 12),
+                      style: GoogleFonts.poppins(color: subColor, fontSize: 12),
                     ),
                     Text(
                       '${t.progressPercentage.toStringAsFixed(1)}%',
                       style: GoogleFonts.poppins(
-                          color: _color,
+                          color: color,
                           fontSize: 14,
                           fontWeight: FontWeight.bold),
                     ),
@@ -130,31 +142,26 @@ class TemplateDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Description
           if (t.description.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  t.description,
-                  style: GoogleFonts.poppins(
-                      color: Colors.white54, fontSize: 13),
-                ),
+                child: Text(t.description,
+                    style: GoogleFonts.poppins(color: subColor, fontSize: 13)),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Toca cada cuadro para marcar como ahorrado',
-                style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
+                style: GoogleFonts.poppins(color: subColor, fontSize: 12),
               ),
             ),
           ),
-          // Grid of entries
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
@@ -173,13 +180,13 @@ class TemplateDetailScreen extends StatelessWidget {
                     duration: const Duration(milliseconds: 250),
                     decoration: BoxDecoration(
                       color: entry.completed
-                          ? _color.withOpacity(0.85)
-                          : Colors.white.withOpacity(0.07),
+                          ? color.withOpacity(0.85)
+                          : Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: entry.completed
-                            ? _color
-                            : Colors.white.withOpacity(0.12),
+                            ? color
+                            : Colors.grey.withOpacity(0.2),
                       ),
                     ),
                     child: Column(
@@ -192,7 +199,7 @@ class TemplateDetailScreen extends StatelessWidget {
                           Text(
                             periodLabel(t.savingType, entry.number),
                             style: GoogleFonts.poppins(
-                                color: Colors.white54,
+                                color: subColor,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500),
                             textAlign: TextAlign.center,
@@ -201,9 +208,7 @@ class TemplateDetailScreen extends StatelessWidget {
                         Text(
                           formatMoney(entry.amount),
                           style: GoogleFonts.poppins(
-                            color: entry.completed
-                                ? Colors.white
-                                : Colors.white70,
+                            color: entry.completed ? Colors.white : subColor,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -221,16 +226,15 @@ class TemplateDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _statBox(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(label,
-            style: GoogleFonts.poppins(color: Colors.white38, fontSize: 11)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: GoogleFonts.poppins(
-                color: color, fontSize: 14, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
+  Widget _statBox(String label, String value, Color color, Color subColor) =>
+      Column(
+        children: [
+          Text(label,
+              style: GoogleFonts.poppins(color: subColor, fontSize: 11)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+        ],
+      );
 }

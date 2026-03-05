@@ -49,7 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       .slideY(begin: -0.3),
                   const SizedBox(height: 24),
                   Text(
-                    'Bienvenido a\nAhorro App',
+                    'Bienvenido a\nMi Ahorrito',
                     style: GoogleFonts.poppins(
                       fontSize: 34,
                       fontWeight: FontWeight.bold,

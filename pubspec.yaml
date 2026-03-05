@@ -1,5 +1,5 @@
-name: ahorro
-description: App de control de ahorro personal
+name: mi_ahorrito
+description: Mi Ahorrito – Retos de Ahorro. Cumple tus metas de ahorro paso a paso.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -16,7 +16,7 @@ dependencies:
   fl_chart: ^0.68.0
   google_fonts: ^6.2.1
   flutter_animate: ^4.5.0
-  lottie: ^3.1.0
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

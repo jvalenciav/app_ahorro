@@ -85,7 +85,23 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Todos los periodos al mismo monto
+  // NUEVO: editar nombre, descripción, emoji y color
+  Future<void> editTemplate({
+    required String templateId,
+    required String name,
+    required String description,
+    required String emoji,
+    required String colorHex,
+  }) async {
+    final template = _templates.firstWhere((t) => t.id == templateId);
+    template.name = name;
+    template.description = description;
+    template.emoji = emoji;
+    template.colorHex = colorHex;
+    await _saveTemplates();
+    notifyListeners();
+  }
+
   SavingTemplate createCustomTemplate({
     required String name,
     required String description,
@@ -116,7 +132,6 @@ class AppProvider extends ChangeNotifier {
     );
   }
 
-  /// Montos distintos por periodo
   SavingTemplate createCustomTemplateWithAmounts({
     required String name,
     required String description,
