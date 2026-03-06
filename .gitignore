@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firma de la app - NO subir al repositorio
+mi_ahorrito.jks
+android/key.properties

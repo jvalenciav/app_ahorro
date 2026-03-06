@@ -1,3 +1,11 @@
+#!/bin/bash
+
+echo "🎨 Aplicando ícono al 100% proporcional..."
+
+# ============================================
+# pubspec.yaml - imagen directa sin modificar
+# ============================================
+cat > pubspec.yaml << 'PUBSPEC'
 name: mi_ahorrito
 description: Mi Ahorrito – Retos de Ahorro. Cumple tus metas de ahorro paso a paso.
 publish_to: 'none'
@@ -37,3 +45,19 @@ flutter:
   assets:
     - assets/images/
     - logoFinal.png
+PUBSPEC
+
+echo "✅ pubspec.yaml actualizado"
+
+flutter pub get
+
+echo ""
+echo "🖼️  Generando íconos..."
+dart run flutter_launcher_icons
+
+echo ""
+echo "============================================"
+echo "  LISTO - imagen al 100% sin modificar"
+echo "============================================"
+echo ""
+echo "Ejecuta: flutter clean && flutter run"
